@@ -1,178 +1,96 @@
-var Teetris = {};
+var Teetris = {
+	//lvl: {},
+	//currentBlock : {},
+	SPEED : 1,
+	frameNumber : 0,
+	GAMEOVER : false
+};
 
 var stage;
-// global ... meh ... falling block
-var block;
-var g = new createjs.Graphics();
-var DELAY = 1000;
-var SPEED = 50;
-var f = 0;
+var lvl = {}; 
+var currentBlock = {};
 
-// current block object
-//var Teetris.block;
-
-Teetris.init = function () {
+init = function () {
 	// create a new stage and point it at the canvas
 	stage = new createjs.Stage(document.getElementById("canvas"));
 	
 	// create level
-	//var level = Teetris.level.create();
-	//level.create();
-	
-	//stage.addChild(level);	
+	lvl = level;
+	lvl.create();
+	lvl.addToStage();
 	
 	createjs.Ticker.addListener(window);    
     createjs.Ticker.useRAF = true;
     createjs.Ticker.setFPS(60);
 	
-	Teetris.start();
+	startGame();
 }
 
-Teetris.start = function() {
+startGame = function() {
 	// keyboard control handlers	
-	document.onkeydown = Teetris.handleKeyDown;
-	document.onkeyup = Teetris.handleKeyUp;
-	
-	// main game loop	
-	// create random new block
-	// TODO: random
-	block = Teetris.block;
-	block.create(10,10);
-	block.addToStage();
-	//stage.addChild(block);
-	
-	// let block fall
-	//while (block.
-	//}
+	document.onkeydown = handleKeyDown;
+	document.onkeyup = handleKeyUp;
+
+	currentBlock = block;
+	currentBlock.create(5,0);
+	currentBlock.addToStage();	
 }
 
-Teetris.handleKeyDown = function(event) {
+handleKeyDown = function(event) {
 	switch(event.keyCode) {
 		case 37: 
-			block.moveLeft();
+			currentBlock.moveLeft();
 			break;			
 		case 38:
-			// block.rotateLeft();
+			// currentBlock.rotateLeft();
 			break;
 		case 39:
-			block.moveRight();
+			currentBlock.moveRight();
 			break;
 		case 40:
-			// block.rotateRight();
+			// currentBlock.rotateRight();
 			break;
 		default:
 			break;
 	}
-	console.log("key down");
 }
 
-Teetris.handleKeyUp = function(event) {
-	console.log("key up");
+handleKeyUp = function(event) {
 }
 
 function tick() {	
-	f += 1;	
-	
-	if (f % SPEED === 0) {
-		block.fall();
-	}
-	console.log("update");
-	stage.update();
-}
+	if (Teetris.GAMEOVER === false) {
+		Teetris.frameNumber += 1;	
+		
+		if (Teetris.frameNumber % Teetris.SPEED === 0) {
+			// set a delay in the falling of the block
+			// check for collision		
+			var posLookAhead = currentBlock.getBlockPositions(0,1);
+			var positions = currentBlock.getBlockPositions(0,0);
 
-Teetris.tick = function() {
-	// Update the logic of the block
-	//block.tick();
-	//level.tick();
-	
-	// update the stage
-	stage.update();
-}
-
-Teetris.level = (function () {
-	// private variables
-	var WIDTH = 10;
-	var HEIGHT = 20;
-	var matrix;
-	var rectangles;
-	
-	return { 
-		create: function () {
-			// initiate empty matrix		
-			matrix = Array.matrix(WIDTH,HEIGHT,0);
-		},
-		// TODO: rename
-		draw: function () {
-			var i,j;
-			for (i = 0; i < HEIGHT; i += 1) {
-				for (j = 0; j < WIDTH; j += 1) {
-					
-				}
-			}
+			var collision = lvl.collision(posLookAhead);
 			
-		},
-		addBlock: function (block) {
-			// add a fallen block to the matrix
+			if (collision === 0) {
+				currentBlock.moveDown();
+			}		
+			if (collision === 1) {
+				console.log("collision");
+				// create new block into currentBlock			
+				currentBlock.removeFromStage();
+				//currentBlock.ClearObject();
+				currentBlock.create(5,0);
+				currentBlock.addToStage();
 			
-		}
-	};	
-}());
-
-// TODO: inheritance (prototype pattern)
-Teetris.block = (function () {
-	var WIDTH = 10;
-	var HEIGHT = 10;
-	var x, y;
-	var rectanglesSpecifications = {
-		rectangle1 : { 
-			x: 0,
-			y: 0,			
-		},
-		//var rectangle2;
-		//var rectangle3;
-		//var rectangle4;
+				// add block to matrix		
+				lvl.addBlock(positions);
+			}
+			if (collision === 2) {
+				// collision on top of level => game over
+				alert("GAME OVER MAN!");
+				Teetris.GAMEOVER = true;
+			}
+		}	
+		
+		stage.update();
 	}
-	var rectangles = [];
-	
-	return {
-		create: function(x, y) {
-			for (key in rectanglesSpecifications) {	
-				var r = rectanglesSpecifications[key];
-				g.beginFill(createjs.Graphics.getRGB(255,0,0));
-				g.drawRect(r.x + x, r.y + y, r.x + x + WIDTH, r.y + y + HEIGHT);
-				console.log(g.toString());
-				rectangles.push(new createjs.Shape(g));	
-			}
-		},
-		rotate: function() {		
-		},
-		addToStage: function() {
-			var i;
-			for (i = 0; i < rectangles.length; i += 1) {
-				stage.addChild(rectangles[i]);
-			}
-		},
-		getRectangles: function() {		
-			return rectangles;
-		},		
-		fall: function() {
-			var i;
-			for (i = 0; i < rectangles.length; i += 1) {
-				rectangles[i].y += HEIGHT;
-			}
-		},
-		moveLeft: function() {
-			var i;
-			for (i = 0; i < rectangles.length; i += 1) {
-				rectangles[i].x -= WIDTH;
-			}
-		},
-		moveRight: function() {
-			var i;
-			for (i = 0; i < rectangles.length; i += 1) {
-				rectangles[i].x += WIDTH;
-			}
-		}
-	}
-}());
-
+}
