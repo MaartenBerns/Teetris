@@ -1,7 +1,18 @@
+// TODO:
+// * other block shapes
+// * line clearing -> moving lines down
+// * points
+// * music
+// * touch control
+// * full screen als op phone...
+
+// * refactoring -> clean/beautiful code
+// * bug fixing
+
 var Teetris = {
 	//lvl: {},
 	//currentBlock : {},
-	SPEED : 1,
+	SPEED : 5,
 	frameNumber : 0,
 	GAMEOVER : false
 };
@@ -34,20 +45,37 @@ startGame = function() {
 	currentBlock = block;
 	currentBlock.create(5,0);
 	currentBlock.addToStage();	
+	
+	fpsLabel = new createjs.Text("-- fps","bold 18px Arial","#FFF");
+	stage.addChild(fpsLabel);
+	fpsLabel.x = 10;
+	fpsLabel.y = 20;
 }
 
 handleKeyDown = function(event) {
 	switch(event.keyCode) {
 		case 37: 
-			currentBlock.moveLeft();
+			var posLookAhead = currentBlock.getBlockPositions(-1,0);
+			var collision = lvl.collision(posLookAhead);
+			
+			if (collision === 0) {
+				currentBlock.moveLeft();
+			}
 			break;			
 		case 38:
-			// currentBlock.rotateLeft();
+			
+			currentBlock.rotateLeft();
 			break;
 		case 39:
-			currentBlock.moveRight();
+			var posLookAhead = currentBlock.getBlockPositions(1,0);
+			var collision = lvl.collision(posLookAhead);
+			
+			if (collision === 0) {
+				currentBlock.moveRight();
+			}
 			break;
 		case 40:
+			currentBlock.moveDown();
 			// currentBlock.rotateRight();
 			break;
 		default:
@@ -59,8 +87,10 @@ handleKeyUp = function(event) {
 }
 
 function tick() {	
+	fpsLabel.text = Math.round(createjs.Ticker.getMeasuredFPS())+" fps";
+	
 	if (Teetris.GAMEOVER === false) {
-		Teetris.frameNumber += 1;	
+		Teetris.frameNumber += 1;		
 		
 		if (Teetris.frameNumber % Teetris.SPEED === 0) {
 			// set a delay in the falling of the block
@@ -74,15 +104,17 @@ function tick() {
 				currentBlock.moveDown();
 			}		
 			if (collision === 1) {
-				console.log("collision");
 				// create new block into currentBlock			
-				currentBlock.removeFromStage();
-				//currentBlock.ClearObject();
+				currentBlock.removeFromStage();		
+				currentBlock = {};
+				currentBlock = block;
 				currentBlock.create(5,0);
 				currentBlock.addToStage();
 			
 				// add block to matrix		
 				lvl.addBlock(positions);
+				lvl.checkLines();
+				//lvl.printMatrix();
 			}
 			if (collision === 2) {
 				// collision on top of level => game over
